@@ -3,6 +3,9 @@ import 'package:movie_app/data/movie_model.dart';
 import 'package:movie_app/helpers/image_path_helper.dart';
 import 'package:vector_math/vector_math_64.dart' show degrees2Radians;
 
+const ROTATE_X = 85.0;
+const SKEW_X = 0.075;
+
 class SelectSeatPage extends StatefulWidget {
   final MovieModel movieModel;
   List<List<bool>> selected = <List<bool>>[];
@@ -15,7 +18,31 @@ class SelectSeatPage extends StatefulWidget {
   _SelectSeatPageState createState() => _SelectSeatPageState();
 }
 
-class _SelectSeatPageState extends State<SelectSeatPage> {
+class _SelectSeatPageState extends State<SelectSeatPage>
+    with SingleTickerProviderStateMixin {
+  AnimationController _animationController;
+  Animation _animation;
+
+  double xRotation = 0.0;
+  double xSkew = 0.0;
+
+  @override
+  void initState() {
+    _animationController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this)
+      ..addListener(() {
+        setState(() {
+          xRotation = ROTATE_X * _animationController.value;
+          xSkew = SKEW_X * _animationController.value;
+        });
+      });
+    _animation =
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
+    Tween().animate(_animation);
+    super.initState();
+    _animationController.forward();
+  }
+
   @override
   Widget build(BuildContext context) {
     for (int i = 0; i < 10; i++) {
@@ -71,8 +98,8 @@ class _SelectSeatPageState extends State<SelectSeatPage> {
                 child: Transform(
                   transform: (Matrix4.identity()
                         ..setEntry(3, 2, 0.0005)
-                        ..rotateX(85 * degrees2Radians)) *
-                      Matrix4.skewX(0.075),
+                        ..rotateX(xRotation * degrees2Radians)) *
+                      Matrix4.skewX(xSkew),
                   child: Hero(
                     tag: widget.movieModel.posterPath,
                     child: Image.network(
